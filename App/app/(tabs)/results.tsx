@@ -3,6 +3,8 @@ import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity } fr
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { Share } from 'react-native';
+import { TextInput } from 'react-native';
+
 
 type AnalysisResult = {
   brand: string;
