@@ -59,4 +59,6 @@ async def search_items(query: str, limit: int = 10):
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers, params=params)
         response.raise_for_status()
+
+        print(response.json())
         return response.json()
