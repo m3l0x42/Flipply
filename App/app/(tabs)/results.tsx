@@ -52,6 +52,7 @@ export default function ResultsScreen() {
             placeholder={result.item}
             placeholderTextColor="#888"
           />
+
           {/* <Text style={styles.title}>{result.item}</Text> */}
           <Text style={styles.brand}>Brand: {result.brand}</Text>
           <Text style={styles.description}>{result.description}</Text>
