@@ -2,6 +2,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
+import { Share } from 'react-native';
+import { TextInput } from 'react-native';
+
 
 type AnalysisResult = {
   brand: string;
@@ -30,13 +33,26 @@ export default function ResultsScreen() {
     }
   }, [result.imageQuality]);
 
+  function setItemName(text: string): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <View style={styles.screenContainer}>
       <ScrollView contentContainerStyle={styles.scrollContentContainer}>
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
 
         <View style={styles.card}>
-          <Text style={styles.title}>{result.item}</Text>
+          const [itemName, setItemName] = useState(result.item);
+
+          <TextInput
+            style={styles.title}
+            value={result.item}
+            onChangeText={setItemName}
+            placeholder={result.item}
+            placeholderTextColor="#888"
+          />
+          {/* <Text style={styles.title}>{result.item}</Text> */}
           <Text style={styles.brand}>Brand: {result.brand}</Text>
           <Text style={styles.description}>{result.description}</Text>
 
@@ -74,9 +90,37 @@ export default function ResultsScreen() {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.postButton}
-          onPress={() => Alert.alert("Post Item", `This will post the item for $${selectedPrice.toFixed(2)}`)}
+          onPress={() =>
+            Alert.alert(
+              "Post Item",
+              `This will post the item for $${selectedPrice.toFixed(2)}`
+            )
+          }
         >
           <Text style={styles.postButtonText}>Post</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.postButton, { backgroundColor: "#28a745" }]}
+          onPress={() => {
+            const message = `
+            📦 ${result.item}
+            🏷️ Brand: ${result.brand}
+            💬 ${result.description}
+
+            💰 Suggested Price: $${selectedPrice.toFixed(2)}
+            🔎 Keywords: ${result.searchKeywords.join(', ')}
+
+            #ForSale #${result.brand.replace(/\s/g, '')}
+            `.trim();
+
+            Share.share({
+              title: `Share ${result.item}`,
+              message,
+            });
+          }}
+        >
+          <Text style={styles.postButtonText}>Share</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -157,26 +201,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    paddingBottom: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    marginBottom: 20,
   },
+
   postButton: {
-    backgroundColor: '#007bff',
+    flex: 1,
+    backgroundColor: "#007bff",
     paddingVertical: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
+    marginHorizontal: 5,
   },
+
   postButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
