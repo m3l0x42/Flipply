@@ -1,12 +1,16 @@
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text } from 'react-native'; // ✅ added imports
+import { FontAwesome5 } from '@expo/vector-icons';
+
+
+
 
 function FlipplyHeaderTitle() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Ionicons name="mail" size={30} color="blue" />
-      <Text style={{ marginLeft: 5, fontSize: 25 }}>  Flipply</Text>
+      <FontAwesome5 name="box" size={30} color='#007AFF' />
+      <Text style={{ marginLeft: 5, fontSize: 25, color: "white" }}>  Flipply</Text>
     </View>
   );
 }
@@ -19,7 +23,7 @@ export default function RootLayout() {
         options={{
           headerTitle: () => <FlipplyHeaderTitle />,
           headerStyle: {
-            backgroundColor: "grey" // color AppBar
+            backgroundColor: "rgba(44, 44, 126, 1)" // color AppBar
           },
         }}
       />
