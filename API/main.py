@@ -7,8 +7,9 @@ import json
 import os
 from typing import List
 from lib.ebay import search_items
+from lib.ebay_post import set_listing, EbayItemResponse
 
-PROJECT_ID = os.environ["PROJECT_ID"]
+PROJECT_ID = os.environ.get("PROJECT_ID")
 MAX_RETRIES = 3
 
 try:
@@ -107,6 +108,18 @@ def analyze_image(image: UploadFile = File(...)):
         status_code=503,
         detail=f"The model failed to provide a valid response after {MAX_RETRIES} attempts."
     )
+
+@app.post("/ebay-listings/")
+def create_ebay_listing(item_data: EbayItemResponse) -> str:
+    try:
+        url = set_listing(item_data)
+    except Exception as e:
+        print(f"Error creating eBay listing: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create eBay listing: {e}"
+        )
+    return str(url)
 
 
 @app.get("/")
