@@ -33,13 +33,26 @@ export default function ResultsScreen() {
     }
   }, [result.imageQuality]);
 
+  function setItemName(text: string): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <View style={styles.screenContainer}>
       <ScrollView contentContainerStyle={styles.scrollContentContainer}>
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
 
         <View style={styles.card}>
-          <Text style={styles.title}>{result.item}</Text>
+          const [itemName, setItemName] = useState(result.item);
+
+          <TextInput
+            style={styles.title}
+            value={result.item}
+            onChangeText={setItemName}
+            placeholder={result.item}
+            placeholderTextColor="#888"
+          />
+          {/* <Text style={styles.title}>{result.item}</Text> */}
           <Text style={styles.brand}>Brand: {result.brand}</Text>
           <Text style={styles.description}>{result.description}</Text>
 
