@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Button, Image, View, StyleSheet, Alert, ActivityIndicator, Platform, Text } from 'react-native';
+import { Button, Image, View, StyleSheet, Alert, ActivityIndicator, Platform, Text, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router'; //
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+
+
 
 const UPLOAD_URL = 'http://10.253.28.1:8000/analyze-image/';
 
@@ -36,10 +39,10 @@ export default function HomeScreen() {
   const handleRetake = () => {
     setImageUri(null);
   };
-  
+
   const handleConfirm = () => {
     if (imageUri) {
-        uploadImage(imageUri);
+      uploadImage(imageUri);
     }
   };
 
@@ -63,7 +66,7 @@ export default function HomeScreen() {
 
       const responseData = await response.json();
       console.log('Upload successful:', responseData);
-      
+
       router.push({
         pathname: "/results",
         params: {
@@ -81,6 +84,23 @@ export default function HomeScreen() {
     }
   };
 
+  async function pickFileHandler() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('File picking failed:', error);
+      Alert.alert('Error', 'Could not pick the file.');
+    }
+  }
+
   return (
     <View style={styles.container}>
       {isUploading && <ActivityIndicator size="large" color="#0000ff" />}
@@ -88,22 +108,62 @@ export default function HomeScreen() {
       {!isUploading && (
         <>
           {imageUri ? (
-              <>
-            <Image source={{ uri: imageUri }} style={styles.previewImage} />
-            <View style={styles.buttonContainer}>
-                <Button title="Retake" onPress={handleRetake} color="#ff5c5c" />
-                <Button title="Confirm" onPress={handleConfirm} />
-            </View>
+            <>
+              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              <View style={styles.buttonContainer}>
+                <Pressable
+                  style={{
+                    backgroundColor: '#ff5c5c',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                  onPress={handleRetake}
+                >
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                    Retake
+                  </Text>
+                </Pressable>
+                <Button title="Confirm" onPress={handleConfirm} color="#139f38ff" />
+              </View>
             </>
-          ) : (
-            <Button 
-              title="Take a Picture" 
-              onPress={takeImageHandler} 
-              disabled={!isReady} 
-            />
-          )}
+          ) :
+
+            (
+              <>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && styles.pressedButton,
+                  ]}
+                  onPress={takeImageHandler}
+                  disabled={!isReady}
+                >
+                  <Ionicons name="camera-outline" size={70} color="white" style={{ marginBottom: 5 }} />
+                  <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
+                    Take a picture
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && styles.pressedButton,
+                  ]}
+                  onPress={pickFileHandler}
+                  disabled={!isReady}
+                >
+                  <Ionicons name="cloud-upload-outline" size={70} color="white" style={{ marginBottom: 5 }} />
+                  <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
+                    Upload Files
+                  </Text>
+                </Pressable>
+              </>
+            )}
         </>
       )}
+
     </View>
   );
 }
@@ -126,5 +186,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 40,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 350,
+    marginVertical: 40,
+  },
+  pressedButton: {
+    opacity: 0.2,
   },
 });
