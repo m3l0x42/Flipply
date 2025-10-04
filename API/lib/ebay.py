@@ -3,6 +3,8 @@ import base64
 import time
 from functools import lru_cache
 import os 
+from dotenv import load_dotenv
+load_dotenv()
 
 SANDBOX_API_URL = "https://api.sandbox.ebay.com"
 
