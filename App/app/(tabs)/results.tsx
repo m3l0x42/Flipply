@@ -1,5 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import Slider from '@react-native-community/slider';
 
 type AnalysisResult = {
   brand: string;
@@ -8,48 +10,86 @@ type AnalysisResult = {
   estimatedPrice: { max: number; min: number; suggested: number; };
   item: string;
   searchKeywords: string[];
+  imageQuality: 'Excellent' | 'Good' | 'Fair' | 'Poor';
 };
 
 export default function ResultsScreen() {
   const params = useLocalSearchParams<{ imageUri: string; analysisData: string }>();
-  
+
   if (!params.imageUri || !params.analysisData) {
     return <Text>Error: Missing data.</Text>;
   }
 
   const result: AnalysisResult = JSON.parse(params.analysisData);
 
-  return (
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
-      
-      <View style={styles.card}>
-        <Text style={styles.title}>{result.item}</Text>
-        <Text style={styles.brand}>Brand: {result.brand}</Text>
-        <Text style={styles.description}>{result.description}</Text>
-        
-        <View style={styles.separator} />
-        
-        <Text style={styles.subHeader}>Condition</Text>
-        <Text style={styles.infoText}>{result.condition}</Text>
-        
-        <Text style={styles.subHeader}>Estimated Price</Text>
-        <Text style={styles.priceText}>
-            ${result.estimatedPrice.min.toFixed(2)} - ${result.estimatedPrice.max.toFixed(2)} 
-            (Suggested: ${result.estimatedPrice.suggested.toFixed(2)})
-        </Text>
+  const [selectedPrice, setSelectedPrice] = useState(result.estimatedPrice.suggested);
 
-        <Text style={styles.subHeader}>Search Keywords</Text>
-        <Text style={styles.infoText}>{result.searchKeywords.join(', ')}</Text>
+  useEffect(() => {
+    if (result.imageQuality !== "Excellent" && result.imageQuality !== "Good") {
+      Alert.alert('Low Image Quality', 'You may want to retake your picture for a better price estimate.');
+    }
+  }, [result.imageQuality]);
+
+  return (
+    <View style={styles.screenContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+        <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
+        
+        <View style={styles.card}>
+          <Text style={styles.title}>{result.item}</Text>
+          <Text style={styles.brand}>Brand: {result.brand}</Text>
+          <Text style={styles.description}>{result.description}</Text>
+          
+          <View style={styles.separator} />
+          
+          <Text style={styles.subHeader}>Condition</Text>
+          <Text style={styles.infoText}>{result.condition}</Text>
+          
+          <Text style={styles.subHeader}>Set Your Price</Text>
+          <Text style={styles.priceDisplay}>
+              ${selectedPrice.toFixed(2)}
+          </Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={result.estimatedPrice.min}
+            maximumValue={result.estimatedPrice.max}
+            value={selectedPrice}
+            onValueChange={value => setSelectedPrice(value)}
+            step={0.05}
+            minimumTrackTintColor="#007bff"
+            maximumTrackTintColor="#d3d3d3"
+            thumbTintColor="#007bff"
+          />
+          <View style={styles.priceRangeLabels}>
+            <Text style={styles.priceRangeText}>${result.estimatedPrice.min.toFixed(2)}</Text>
+            <Text style={styles.priceRangeText}>${result.estimatedPrice.max.toFixed(2)}</Text>
+          </View>
+
+
+          <Text style={styles.subHeader}>Search Keywords</Text>
+          <Text style={styles.infoText}>{result.searchKeywords.join(', ')}</Text>
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.postButton}
+          onPress={() => Alert.alert("Post Item", `This will post the item for $${selectedPrice.toFixed(2)}`)}
+        >
+          <Text style={styles.postButtonText}>Post</Text>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenContainer: {
     flex: 1,
     backgroundColor: '#f0f2f5',
+  },
+  scrollContentContainer: {
+    paddingBottom: 120,
   },
   resultImage: {
     width: '100%',
@@ -97,9 +137,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  priceText: {
-    fontSize: 16,
+  priceDisplay: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#007bff',
-    fontWeight: '500',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  priceRangeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  priceRangeText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  postButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  postButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

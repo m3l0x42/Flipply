@@ -63,7 +63,7 @@ def analyze_image(image: UploadFile = File(...)):
       "item": "The most likely name of the item.",
       "brand": "The brand of the item, or 'Unknown' if not identifiable.",
       "description": "A concise, one-sentence description of the item.",
-      "imageQuality": "A brief assesment of the image quality (e.g., 'excelent', 'good', 'fair', 'poor').",
+      "imageQuality": "An classification of the image quality ",
       "searchKeywords": [
         "A list of 3-5 precise string keywords for finding this item online."
       ],
@@ -74,6 +74,16 @@ def analyze_image(image: UploadFile = File(...)):
         "suggested": 0.0
       }
     }
+
+    When classifying the imageQuality, use the following criteria:
+
+    Excellent: High resolution, well-lit, and in focus. All text, logos, and fine details are perfectly clear and legible.
+
+    Good: The main object is clearly visible and in focus. Most details are identifiable, but the image may have minor lighting issues, slightly lower resolution, or some text may be hard to read.
+
+    Fair: The object is identifiable, but the image is blurry, poorly lit, or low resolution, causing significant details to be obscured.
+
+    Poor: The object is difficult to identify due to severe blur, very poor lighting, obstruction, or extremely low resolution.
     """
 
     generation_config = GenerationConfig(
