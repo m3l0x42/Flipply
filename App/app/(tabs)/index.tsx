@@ -111,8 +111,21 @@ export default function HomeScreen() {
             <>
               <Image source={{ uri: imageUri }} style={styles.previewImage} />
               <View style={styles.buttonContainer}>
-                <Button title="Retake" onPress={handleRetake} color="#ff5c5c" />
-                <Button title="Confirm" onPress={handleConfirm} />
+                <Pressable
+                  style={{
+                    backgroundColor: '#ff5c5c',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                  onPress={handleRetake}
+                >
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                    Retake
+                  </Text>
+                </Pressable>
+                <Button title="Confirm" onPress={handleConfirm} color="#139f38ff" />
               </View>
             </>
           ) :
