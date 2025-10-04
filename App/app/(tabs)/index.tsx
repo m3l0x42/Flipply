@@ -3,7 +3,7 @@ import { Button, Image, View, StyleSheet, Alert, ActivityIndicator, Platform, Te
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 const UPLOAD_URL = 'http://10.253.28.1:8000/analyze-image/';
@@ -102,20 +102,25 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {isUploading && <ActivityIndicator size="large" color="#0000ff" />}
+    <LinearGradient
+      colors={['#0d0d0d', '#1a1a1a', '#007AFF']} // fondo negro -> gris oscuro -> azul
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
+      {isUploading && <ActivityIndicator size="large" color="#ffffff" />}
 
       {!isUploading && (
         <>
           {imageUri ? (
             <>
               <Image source={{ uri: imageUri }} style={styles.previewImage} />
-              <View style={styles.buttonContainer}>
+              <View style={[styles.buttonContainer, { flexDirection: 'row', justifyContent: 'space-between', gap: 5 }]}>
                 <Pressable
                   style={{
                     backgroundColor: '#ff5c5c',
                     paddingVertical: 12,
-                    paddingHorizontal: 20,
+                    paddingHorizontal: 30,
                     borderRadius: 8,
                     alignItems: 'center',
                   }}
@@ -125,47 +130,59 @@ export default function HomeScreen() {
                     Retake
                   </Text>
                 </Pressable>
-                <Button title="Confirm" onPress={handleConfirm} color="#139f38ff" />
+
+                <Pressable
+                  style={{
+                    backgroundColor: '#16aa4aff',
+                    paddingVertical: 12,
+                    paddingHorizontal: 30,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                  onPress={handleConfirm}
+                >
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                    Confirm
+                  </Text>
+                </Pressable>
               </View>
             </>
-          ) :
+          ) : (
+            <>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.pressedButton,
+                ]}
+                onPress={takeImageHandler}
+                disabled={!isReady}
+              >
+                <Ionicons name="camera-outline" size={70} color="white" style={{ marginBottom: 5 }} />
+                <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
+                  Take a picture
+                </Text>
+              </Pressable>
 
-            (
-              <>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.pressedButton,
-                  ]}
-                  onPress={takeImageHandler}
-                  disabled={!isReady}
-                >
-                  <Ionicons name="camera-outline" size={70} color="white" style={{ marginBottom: 5 }} />
-                  <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
-                    Take a picture
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.button,
-                    pressed && styles.pressedButton,
-                  ]}
-                  onPress={pickFileHandler}
-                  disabled={!isReady}
-                >
-                  <Ionicons name="cloud-upload-outline" size={70} color="white" style={{ marginBottom: 5 }} />
-                  <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
-                    Upload Files
-                  </Text>
-                </Pressable>
-              </>
-            )}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.pressedButton,
+                ]}
+                onPress={pickFileHandler}
+                disabled={!isReady}
+              >
+                <Ionicons name="cloud-upload-outline" size={70} color="white" style={{ marginBottom: 5 }} />
+                <Text style={{ fontSize: 20, color: 'white', fontWeight: '900', textAlign: 'center' }}>
+                  Upload Files
+                </Text>
+              </Pressable>
+            </>
+          )}
         </>
       )}
-
-    </View>
+    </LinearGradient>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -187,16 +204,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
   },
+  // button: {
+  //   backgroundColor: '#007AFF',
+  //   padding: 40,
+  //   borderRadius: 15,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   width: 350,
+  //   marginVertical: 40,
+  // },
+  // pressedButton: {
+  //   opacity: 0.2,
+  // },
+
   button: {
     backgroundColor: '#007AFF',
-    padding: 40,
-    borderRadius: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 350,
-    marginVertical: 40,
+    marginVertical: 25,
+    shadowColor: '#ffffffff',
+    shadowOffset: { width: 8, height: 3 },
+    shadowOpacity: 0.40,
+    shadowRadius: 9,
+    elevation: 10,
+    width: 320,
   },
   pressedButton: {
     opacity: 0.2,
+    transform: [{ scale: 0.77 }],
+  },
+  buttonText: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 5,
   },
 });

@@ -34,20 +34,20 @@ export default function ResultsScreen() {
     <View style={styles.screenContainer}>
       <ScrollView contentContainerStyle={styles.scrollContentContainer}>
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
-        
+
         <View style={styles.card}>
           <Text style={styles.title}>{result.item}</Text>
           <Text style={styles.brand}>Brand: {result.brand}</Text>
           <Text style={styles.description}>{result.description}</Text>
-          
+
           <View style={styles.separator} />
-          
+
           <Text style={styles.subHeader}>Condition</Text>
           <Text style={styles.infoText}>{result.condition}</Text>
-          
+
           <Text style={styles.subHeader}>Set Your Price</Text>
           <Text style={styles.priceDisplay}>
-              ${selectedPrice.toFixed(2)}
+            ${selectedPrice.toFixed(2)}
           </Text>
           <Slider
             style={styles.slider}
@@ -72,7 +72,7 @@ export default function ResultsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.postButton}
           onPress={() => Alert.alert("Post Item", `This will post the item for $${selectedPrice.toFixed(2)}`)}
         >
