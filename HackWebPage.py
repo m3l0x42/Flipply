@@ -18,30 +18,35 @@ st.markdown("""
 
 st.markdown("---")
 
+st.markdown("<h3 style='text-align:center;'> How Flippy Works</h3>", unsafe_allow_html=True)
+st.markdown("""
+1. Take a picture or upload an image of the item you want to sell  
+2. Flipply analyzes and predicts its best selling price  
+3. Post it on eBay and start selling faster and easier
+""")
+st.markdown("[View our GitHub Repository](https://github.com/m3l0x42/HackHarvard/tree/main) 🔗")
 
-col1, col2 = st.columns([2, 3])
+images = [
+    "assets/hh1.jpg",
+    "assets/hh2.jpg",
+    "assets/hh3.jpg",
+    "assets/hh4.jpg",
+    "assets/hh5.jpg",
+]
 
-with col1:
-    st.text("assets/flipply_mockup.png")
-
-with col2:
-    st.markdown("""
-    ### How Flipply Works
-    1. Take a picture or upload an image of the item you want to sell
-    2. Flipply analyzes and predicts its best selling price
-    3. Post it on eBay and start selling faster and easier
-    """)
-    st.markdown("[View our GitHub Repository](https://github.com/m3l0x42/HackHarvard/tree/main) 🔗")
-
+st.write("")
+cols = st.columns(len(images))
+for i, col in enumerate(cols):
+    col.image(images[i], width=280)
 st.markdown("---")
 
-st.markdown("### Watch Flipply in Action")
+st.markdown("<h3 style='text-align:center;'> Watch Flipply in Action</h3>", unsafe_allow_html=True)
 st.text("assets/flipply_demo.gif")
 
 st.markdown("---")
 
 
-st.markdown("### Features")
+st.markdown("<h3 style='text-align:center;'> Features</h3>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
 with col1:
