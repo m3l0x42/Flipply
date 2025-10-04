@@ -6,6 +6,7 @@ import uvicorn
 import json
 import os
 from typing import List
+from lib.ebay import search_items
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 MAX_RETRIES = 3
@@ -109,7 +110,8 @@ def analyze_image(image: UploadFile = File(...)):
 
 
 @app.get("/")
-def read_root():
+async def read_root():
+    print(await search_items("chair"))
     return {"message": "Hello world!"}
 
 
