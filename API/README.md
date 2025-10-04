@@ -6,8 +6,8 @@
 
 ## Starting
 
-`export PROJECT_ID="key"`
+`export PROJECT_ID="AIzaSyAH04FRpL0WwTocKJxnfxfNgqSk8_w-UwI"`
 
 ## Testing
 
-`curl -X POST -F "file=@./test.jpg" http://127.0.0.1:8000/analyze-image/`Q
+`curl -X POST -F "file=@./test.jpg" http://0.0.0.0:8000/analyze-image/`Q

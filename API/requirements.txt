@@ -2,3 +2,8 @@ fastapi
 uvicorn[standard]
 pydantic
 google-cloud-aiplatform
+vertexai
+python-multipart
+requests
+python-dotenv
+xmltodict
