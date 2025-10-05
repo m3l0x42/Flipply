@@ -1,16 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity, TextInput, Share, Pressable } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
-import { Share } from 'react-native';
-import { TextInput } from 'react-native';
-
 
 type AnalysisResult = {
   brand: string;
   condition: string;
   description: string;
-  estimatedPrice: { max: number; min: number; suggested: number; };
+  estimatedPrice: { max: number; min: number; suggested: number };
   item: string;
   searchKeywords: string[];
   imageQuality: 'Excellent' | 'Good' | 'Fair' | 'Poor';
@@ -25,17 +22,22 @@ export default function ResultsScreen() {
 
   const result: AnalysisResult = JSON.parse(params.analysisData);
 
+  // ✅ Estados locales para los textos editables
+  const [itemName, setItemName] = useState(result.item);
+  const [brand, setBrand] = useState(result.brand);
+  const [description, setDescription] = useState(result.description);
   const [selectedPrice, setSelectedPrice] = useState(result.estimatedPrice.suggested);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
-    if (result.imageQuality !== "Excellent" && result.imageQuality !== "Good") {
+    if (result.imageQuality !== 'Excellent' && result.imageQuality !== 'Good') {
       Alert.alert('Low Image Quality', 'You may want to retake your picture for a better price estimate.');
     }
   }, [result.imageQuality]);
 
-  function setItemName(text: string): void {
-    throw new Error('Function not implemented.');
-  }
+  // Add this line with other useState declarations
+  const [condition, setCondition] = useState(result.condition);
 
   return (
     <View style={styles.screenContainer}>
@@ -43,29 +45,124 @@ export default function ResultsScreen() {
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
 
         <View style={styles.card}>
-          const [itemName, setItemName] = useState(result.item);
-
+          {/* ✅ TextInputs ahora usan estados locales */}
           <TextInput
             style={styles.title}
-            value={result.item}
+            value={itemName}
             onChangeText={setItemName}
-            placeholder={result.item}
+            placeholder="Item name"
             placeholderTextColor="#888"
+            multiline
           />
 
-          {/* <Text style={styles.title}>{result.item}</Text> */}
-          <Text style={styles.brand}>Brand: {result.brand}</Text>
-          <Text style={styles.description}>{result.description}</Text>
+          <TextInput
+            style={styles.brand}
+            value={brand}
+            onChangeText={setBrand}
+            placeholder="Brand"
+            placeholderTextColor="#888"
+            multiline
+          />
+
+          <TextInput
+            style={styles.description}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Description"
+            placeholderTextColor="#888"
+            multiline
+          />
 
           <View style={styles.separator} />
+          const [condition, setCondition] = useState(result.condition);
 
           <Text style={styles.subHeader}>Condition</Text>
-          <Text style={styles.infoText}>{result.condition}</Text>
+          <TextInput
+            style={styles.infoText}
+            value={condition}
+            onChangeText={setCondition}
+            placeholder={result.condition}
+            placeholderTextColor="#888"
+            multiline
+          />
+
+          {/*<Text style={styles.infoText}>{result.condition}</Text>*/}
+
+          {/* <Pressable
+            style={{
+              backgroundColor: '#007AFF',
+              paddingVertical: 12,
+              paddingHorizontal: 30,
+              borderRadius: 8,
+              alignItems: 'center',
+              marginTop: 10,
+            }}
+            onPress={() => Alert.alert('Updated!', 'Item details have been updated successfully')}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+              Update information
+            </Text>
+          </Pressable> */}
+
+          <Pressable
+            style={{
+              backgroundColor: loading ? '#999' : '#007AFF',
+              paddingVertical: 12,
+              paddingHorizontal: 30,
+              borderRadius: 8,
+              alignItems: 'center',
+              marginTop: 10,
+            }}
+            disabled={loading}
+            onPress={async () => {
+              try {
+                setLoading(true);
+
+                const response = await fetch('http://127.0.0.1:8000/reanalyze/', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    item: itemName,
+                    brand: brand,
+                    description: description,
+                    condition: condition,
+                    searchKeywords: result.searchKeywords,
+                    imageQuality: result.imageQuality,
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error(`Error ${response.status}: ${await response.text()}`);
+                }
+
+                const updatedData = await response.json();
+
+                setSelectedPrice(updatedData.estimatedPrice.suggested);
+                result.estimatedPrice = updatedData.estimatedPrice;
+
+                Alert.alert(
+                  'Reanalyzed!',
+                  `New suggested price: $${updatedData.estimatedPrice.suggested.toFixed(2)}`
+                );
+              } catch (error) {
+                console.error('Reanalyze error:', error);
+                Alert.alert('Error', 'Failed to reanalyze item. Please try again.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+              {loading ? 'Reanalyzing...' : 'Reanalyze'}
+            </Text>
+          </Pressable>
+
 
           <Text style={styles.subHeader}>Set Your Price</Text>
-          <Text style={styles.priceDisplay}>
-            ${selectedPrice.toFixed(2)}
-          </Text>
+          <Text style={styles.priceDisplay}>${selectedPrice.toFixed(2)}</Text>
+
           <Slider
             style={styles.slider}
             minimumValue={result.estimatedPrice.min}
@@ -77,11 +174,11 @@ export default function ResultsScreen() {
             maximumTrackTintColor="#d3d3d3"
             thumbTintColor="#007bff"
           />
+
           <View style={styles.priceRangeLabels}>
             <Text style={styles.priceRangeText}>${result.estimatedPrice.min.toFixed(2)}</Text>
             <Text style={styles.priceRangeText}>${result.estimatedPrice.max.toFixed(2)}</Text>
           </View>
-
 
           <Text style={styles.subHeader}>Search Keywords</Text>
           <Text style={styles.infoText}>{result.searchKeywords.join(', ')}</Text>
@@ -92,31 +189,28 @@ export default function ResultsScreen() {
         <TouchableOpacity
           style={styles.postButton}
           onPress={() =>
-            Alert.alert(
-              "Post Item",
-              `This will post the item for $${selectedPrice.toFixed(2)}`
-            )
+            Alert.alert('Post Item', `This will post the item for $${selectedPrice.toFixed(2)}`)
           }
         >
           <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.postButton, { backgroundColor: "#28a745" }]}
+          style={[styles.postButton, { backgroundColor: '#28a745' }]}
           onPress={() => {
             const message = `
-            📦 ${result.item}
-            🏷️ Brand: ${result.brand}
-            💬 ${result.description}
+📦 ${itemName}
+🏷️ Brand: ${brand}
+💬 ${description}
 
-            💰 Suggested Price: $${selectedPrice.toFixed(2)}
-            🔎 Keywords: ${result.searchKeywords.join(', ')}
+💰 Suggested Price: $${selectedPrice.toFixed(2)}
+🔎 Keywords: ${result.searchKeywords.join(', ')}
 
-            #ForSale #${result.brand.replace(/\s/g, '')}
-            `.trim();
+#ForSale #${brand.replace(/\s/g, '')}
+`.trim();
 
             Share.share({
-              title: `Share ${result.item}`,
+              title: `Share ${itemName}`,
               message,
             });
           }}
@@ -202,26 +296,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-
   footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 20,
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
-
   postButton: {
     flex: 1,
-    backgroundColor: "#007bff",
+    backgroundColor: '#007bff',
     paddingVertical: 15,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
     marginHorizontal: 5,
   },
-
   postButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });
+
+function setSelectedPrice(suggested: any) {
+  throw new Error('Function not implemented.');
+}
+
