@@ -4,7 +4,18 @@
 * Beyond getting rid of home clustering, a higher incentive on e-commerce and extension of thousands of life cycles of products is being resolved, and, with faster logistics, Flipply moves more people and goods, powering our future.
 
 
-<img src="assets/hh1.jpg" alt="App1" width="200"/> <img src="assets/hh2.jpg" alt="App2" width="200"/> <img src="assets/hh3.jpg" alt="App3" width="200"/><img src="assets/hh4.jpg" alt="App4" width="200"/><img src="assets/hh5.jpg" alt="App5" width="200"/>
+<img src="assets/hh1.jpg" alt="App1" width="150"/> <img src="assets/hh2.jpg" alt="App2" width="150"/> <img src="assets/hh3.jpg" alt="App3" width="150"/><img src="assets/hh4.jpg" alt="App4" width="150"/><img src="assets/hh5.jpg" alt="App5" width="150"/>
+
+
+## Tech & Langs
+- Gemini API
+- eBay API
+- React
+- Streamlit
+- Python
+- JavaScript
+- TypeScript
+- Github
 
 
 
