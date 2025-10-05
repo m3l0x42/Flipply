@@ -66,16 +66,16 @@ def create_listing(api, image_url, title, descr, price, condition):
                     "ShippingServiceOptions": {
                         "ShippingServicePriority": "1",
                         "ShippingService": "USPSMedia",
-                        "ShippingServiceCost": "2.50"
+                        "ShippingServiceCost": "2.50" 
                     }
                 },
                 "Site": "US",
 
                 "ItemSpecifics": {
                     "NameValueList": [
-                        {'Name': 'Book Title', 'Value': title},
-                        {'Name': 'Author', 'Value': "Guest"},
-                        {'Name': 'Language', 'Value': "English"}
+                        {'Name': 'Book Title', 'Value': title}, # Best practice to match the item title
+                        {'Name': 'Author', 'Value': 'A. Cheesemaker'}, # Example value
+                        {'Name': 'Language', 'Value': 'English'} # Example value
                     ]
                 }
             }
@@ -138,7 +138,8 @@ if __name__ == "__main__":
             
             # Step 2: If image upload was successful, create the listing
             if hosted_image_url:
-                create_listing(api, hosted_image_url, "cheese", "some cheese", 10, "excellent")
+                # api, image_url, title, descr, price, condition
+                create_listing(api, hosted_image_url, "cheese", "some cheese", 20, "good")
 
         except ConnectionError as e:
             # This is a more specific catch for API connection issues

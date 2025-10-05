@@ -157,7 +157,7 @@ async def analyze_image(image: UploadFile = File(...)):
     {json.dumps(initial_analysis_json, indent=2)}
     ```
 
-    **Comparable eBay Listings (Market Data):**
+    **Comparable eBay Listings (Market   Data):**
     ```json
     {json.dumps(ebay_listings, indent=2)}
     ```
@@ -185,10 +185,18 @@ async def analyze_image(image: UploadFile = File(...)):
         except Exception as e:
             print(f"An error occurred on attempt {attempt + 1}: {e}")
 
+    if not price_analysis_json or "estimatedPrice" not in price_analysis_json:
+        raise HTTPException(
+            status_code=503,
+            detail=f"The model failed to generate a price estimate after {MAX_RETRIES} attempts."
+        )
+
+    # Merge the initial analysis with the price analysis
     final_response = initial_analysis_json
+    final_response.update(price_analysis_json) # This adds the 'estimatedPrice' key
 
     return final_response
-
+    
 @app.get("/")
 async def read_root():
     return {"message": "Hello world!"}

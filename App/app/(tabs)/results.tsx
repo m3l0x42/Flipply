@@ -1,10 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity, TextInput } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { Share } from 'react-native';
-import { TextInput } from 'react-native';
-
 
 type AnalysisResult = {
   brand: string;
@@ -25,7 +23,9 @@ export default function ResultsScreen() {
 
   const result: AnalysisResult = JSON.parse(params.analysisData);
 
+  // --- FIX 1: Hooks moved to the top level of the component ---
   const [selectedPrice, setSelectedPrice] = useState(result.estimatedPrice.suggested);
+  const [itemName, setItemName] = useState(result.item);
 
   useEffect(() => {
     if (result.imageQuality !== "Excellent" && result.imageQuality !== "Good") {
@@ -33,9 +33,8 @@ export default function ResultsScreen() {
     }
   }, [result.imageQuality]);
 
-  function setItemName(text: string): void {
-    throw new Error('Function not implemented.');
-  }
+  // --- FIX 2: Removed the unimplemented setItemName function ---
+  // This function is no longer needed as useState provides the setter.
 
   return (
     <View style={styles.screenContainer}>
@@ -43,16 +42,16 @@ export default function ResultsScreen() {
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
 
         <View style={styles.card}>
-          const [itemName, setItemName] = useState(result.item);
+          {/* The useState hook was incorrectly placed here */}
 
           <TextInput
             style={styles.title}
-            value={result.item}
+            // --- FIX 3: Value is now linked to the state variable ---
+            value={itemName} 
             onChangeText={setItemName}
             placeholder={result.item}
             placeholderTextColor="#888"
           />
-          {/* <Text style={styles.title}>{result.item}</Text> */}
           <Text style={styles.brand}>Brand: {result.brand}</Text>
           <Text style={styles.description}>{result.description}</Text>
 
@@ -81,7 +80,6 @@ export default function ResultsScreen() {
             <Text style={styles.priceRangeText}>${result.estimatedPrice.max.toFixed(2)}</Text>
           </View>
 
-
           <Text style={styles.subHeader}>Search Keywords</Text>
           <Text style={styles.infoText}>{result.searchKeywords.join(', ')}</Text>
         </View>
@@ -93,7 +91,7 @@ export default function ResultsScreen() {
           onPress={() =>
             Alert.alert(
               "Post Item",
-              `This will post the item for $${selectedPrice.toFixed(2)}`
+              `This will post the item "${itemName}" for $${selectedPrice.toFixed(2)}`
             )
           }
         >
@@ -104,7 +102,7 @@ export default function ResultsScreen() {
           style={[styles.postButton, { backgroundColor: "#28a745" }]}
           onPress={() => {
             const message = `
-            📦 ${result.item}
+            📦 ${itemName}
             🏷️ Brand: ${result.brand}
             💬 ${result.description}
 
@@ -115,7 +113,7 @@ export default function ResultsScreen() {
             `.trim();
 
             Share.share({
-              title: `Share ${result.item}`,
+              title: `Share ${itemName}`,
               message,
             });
           }}
@@ -127,13 +125,15 @@ export default function ResultsScreen() {
   );
 }
 
+
+// --- Styles remain the same ---
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     backgroundColor: '#f0f2f5',
   },
   scrollContentContainer: {
-    paddingBottom: 120,
+    paddingBottom: 120, // Increased padding to ensure no overlap with footer
   },
   resultImage: {
     width: '100%',
@@ -156,6 +156,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    paddingBottom: 5,
+    color: '#000', // Ensure text color is set for TextInput
   },
   brand: {
     fontSize: 16,
@@ -201,14 +205,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-
   footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 20,
+    justifyContent: "space-around",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: '#f0f2f5', // Match screen background
+    paddingBottom: 20, // Safe area padding
   },
-
   postButton: {
     flex: 1,
     backgroundColor: "#007bff",
@@ -216,8 +224,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginHorizontal: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
-
   postButtonText: {
     color: "white",
     fontSize: 18,
