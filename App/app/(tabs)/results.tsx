@@ -3,12 +3,13 @@ import { View, Text, Image, StyleSheet, ScrollView, Alert, TouchableOpacity, Tex
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { Share } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 type AnalysisResult = {
   brand: string;
   condition: string;
   description: string;
-  estimatedPrice: { max: number; min: number; suggested: number; };
+  estimatedPrice: { max: number; min: number; suggested: number };
   item: string;
   searchKeywords: string[];
   imageQuality: 'Excellent' | 'Good' | 'Fair' | 'Poor';
@@ -23,18 +24,21 @@ export default function ResultsScreen() {
 
   const result: AnalysisResult = JSON.parse(params.analysisData);
 
-  // --- FIX 1: Hooks moved to the top level of the component ---
-  const [selectedPrice, setSelectedPrice] = useState(result.estimatedPrice.suggested);
   const [itemName, setItemName] = useState(result.item);
+  const [brand, setBrand] = useState(result.brand);
+  const [description, setDescription] = useState(result.description);
+  const [selectedPrice, setSelectedPrice] = useState(result.estimatedPrice.suggested);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
-    if (result.imageQuality !== "Excellent" && result.imageQuality !== "Good") {
+    if (result.imageQuality !== 'Excellent' && result.imageQuality !== 'Good') {
       Alert.alert('Low Image Quality', 'You may want to retake your picture for a better price estimate.');
     }
   }, [result.imageQuality]);
 
-  // --- FIX 2: Removed the unimplemented setItemName function ---
-  // This function is no longer needed as useState provides the setter.
+  // Add this line with other useState declarations
+  const [condition, setCondition] = useState(result.condition);
 
   return (
     <View style={styles.screenContainer}>
@@ -42,28 +46,49 @@ export default function ResultsScreen() {
         <Image source={{ uri: params.imageUri }} style={styles.resultImage} />
 
         <View style={styles.card}>
-          {/* The useState hook was incorrectly placed here */}
-
+          {/* ✅ TextInputs ahora usan estados locales */}
           <TextInput
             style={styles.title}
-            // --- FIX 3: Value is now linked to the state variable ---
-            value={itemName} 
+            value={itemName}
             onChangeText={setItemName}
-            placeholder={result.item}
+            placeholder="Item name"
             placeholderTextColor="#888"
+            multiline
           />
-          <Text style={styles.brand}>Brand: {result.brand}</Text>
-          <Text style={styles.description}>{result.description}</Text>
+
+          <TextInput
+            style={styles.brand}
+            value={brand}
+            onChangeText={setBrand}
+            placeholder="Brand"
+            placeholderTextColor="#888"
+            multiline
+          />
+
+          <TextInput
+            style={styles.description}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Description"
+            placeholderTextColor="#888"
+            multiline
+          />
 
           <View style={styles.separator} />
 
           <Text style={styles.subHeader}>Condition</Text>
-          <Text style={styles.infoText}>{result.condition}</Text>
+          <TextInput
+            style={styles.infoText}
+            value={condition}
+            onChangeText={setCondition}
+            placeholder={result.condition}
+            placeholderTextColor="#888"
+            multiline
+          />
 
           <Text style={styles.subHeader}>Set Your Price</Text>
-          <Text style={styles.priceDisplay}>
-            ${selectedPrice.toFixed(2)}
-          </Text>
+          <Text style={styles.priceDisplay}>${selectedPrice.toFixed(2)}</Text>
+
           <Slider
             style={styles.slider}
             minimumValue={result.estimatedPrice.min}
@@ -75,6 +100,7 @@ export default function ResultsScreen() {
             maximumTrackTintColor="#d3d3d3"
             thumbTintColor="#007bff"
           />
+
           <View style={styles.priceRangeLabels}>
             <Text style={styles.priceRangeText}>${result.estimatedPrice.min.toFixed(2)}</Text>
             <Text style={styles.priceRangeText}>${result.estimatedPrice.max.toFixed(2)}</Text>
@@ -88,29 +114,69 @@ export default function ResultsScreen() {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.postButton}
-          onPress={() =>
-            Alert.alert(
-              "Post Item",
-              `This will post the item "${itemName}" for $${selectedPrice.toFixed(2)}`
-            )
-          }
+          onPress={async () => {
+            try {
+              setLoading(true);
+          
+              const formData = new FormData();
+              formData.append("title", itemName);
+              formData.append("description", description);
+              formData.append("price", selectedPrice.toString());
+              formData.append("condition", condition);
+              formData.append("image", {
+                uri: params.imageUri,
+                name: "upload.jpg",
+                type: "image/jpeg",
+              } as any);
+          
+              const response = await fetch("http://10.253.28.1:8000/post/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+                body: formData,
+              });
+          
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+              }
+          
+              const data = await response.json();
+              Alert.alert("✅ Success", `Listing created: ${data.item_id || "check console"}`);
+
+              Alert.alert("✅ Success", `Listing created!`, [
+                {
+                  text: "View Listing",
+                  onPress: () => WebBrowser.openBrowserAsync(data.listingUrl),
+                },
+                { text: "OK" }
+              ]);
+
+            } catch (error: any) {
+              console.error("Error posting listing:", error);
+              Alert.alert("❌ Failed to post", error.message || "Unknown error");
+            } finally {
+              setLoading(false);
+            }
+          }}          
         >
           <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.postButton, { backgroundColor: "#28a745" }]}
+          style={[styles.postButton, { backgroundColor: '#28a745' }]}
           onPress={() => {
             const message = `
-            📦 ${itemName}
-            🏷️ Brand: ${result.brand}
-            💬 ${result.description}
+📦 ${itemName}
+🏷️ Brand: ${brand}
+💬 ${description}
 
-            💰 Suggested Price: $${selectedPrice.toFixed(2)}
-            🔎 Keywords: ${result.searchKeywords.join(', ')}
+💰 Suggested Price: $${selectedPrice.toFixed(2)}
+🔎 Keywords: ${result.searchKeywords.join(', ')}
 
-            #ForSale #${result.brand.replace(/\s/g, '')}
-            `.trim();
+#ForSale #${brand.replace(/\s/g, '')}
+`.trim();
 
             Share.share({
               title: `Share ${itemName}`,
@@ -206,23 +272,18 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 20,
     paddingHorizontal: 10,
-    backgroundColor: '#f0f2f5', // Match screen background
-    paddingBottom: 20, // Safe area padding
   },
   postButton: {
     flex: 1,
-    backgroundColor: "#007bff",
+    backgroundColor: '#007bff',
     paddingVertical: 15,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
     marginHorizontal: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -231,8 +292,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   postButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });
+
+function setSelectedPrice(suggested: any) {
+  throw new Error('Function not implemented.');
+}
+

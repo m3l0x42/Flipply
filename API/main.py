@@ -8,7 +8,6 @@ import json
 import os
 from typing import List
 from lib.ebay import search_items
-from lib.ebay_post import set_listing, EbayItemResponse
 
 from lib.ebay_logic import create_ebay_listing, EbayItemResponse
 
@@ -26,10 +25,12 @@ app = FastAPI(
     title="HackHarvard API",
 )
 
+
 class EstimatedPrice(BaseModel):
     min: float = Field(...)
     max: float = Field(...)
     suggested: float = Field(...)
+
 
 class ImageAnalysisResponse(BaseModel):
     item: str = Field(...)
@@ -40,6 +41,7 @@ class ImageAnalysisResponse(BaseModel):
     estimatedPrice: EstimatedPrice
     imageQuality: str = Field(...)
 
+
 @app.post("/post/", response_model=EbayItemResponse)
 async def post_listing(
     title: str = Form(...),
@@ -48,20 +50,13 @@ async def post_listing(
     condition: str = Form(...),
     image: UploadFile = File(...)
 ):
-    """
-    Creates a new eBay listing from the provided details and image.
-    This endpoint expects 'multipart/form-data'.
-    """
     if not image.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400, detail="Invalid file type. Please upload an image.")
 
     try:
-        # Read the image data into memory from the uploaded file
         image_data = await image.read()
 
-        # Because create_ebay_listing uses a blocking I/O library (ebaysdk),
-        # we run it in a threadpool to avoid blocking the server's event loop.
         listing_response = await run_in_threadpool(
             create_ebay_listing,
             title=title,
@@ -70,12 +65,13 @@ async def post_listing(
             condition=condition,
             image_data=image_data
         )
+        print(listing_response)
         return listing_response
-        
+
     except Exception as e:
-        # Catch errors raised from the ebay_logic module and return a proper HTTP error
         print(f"Error posting to eBay: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
 
 
 @app.post("/analyze-image/", response_model=ImageAnalysisResponse)
@@ -125,23 +121,26 @@ async def analyze_image(image: UploadFile = File(...)):
             initial_analysis_json = json.loads(response.text)
             break
         except Exception as e:
-            print(f"An error occurred during identification (attempt {attempt + 1}): {e}")
+            print(
+                f"An error occurred during identification (attempt {attempt + 1}): {e}")
             if attempt == MAX_RETRIES - 1:
-                 raise HTTPException(
+                raise HTTPException(
                     status_code=503,
                     detail=f"The model failed to identify the item after {MAX_RETRIES} attempts."
                 )
 
     search_query = " ".join(initial_analysis_json.get("searchKeywords", []))
     if not search_query:
-        raise HTTPException(status_code=400, detail="Could not generate search keywords from image.")
+        raise HTTPException(
+            status_code=400, detail="Could not generate search keywords from image.")
 
     try:
         ebay_listings = await search_items(search_query, limit=10)
         print(f"Ebay listigs found: {ebay_listings}")
     except Exception as e:
         print(f"Error searching eBay: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch listings from eBay: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch listings from eBay: {e}")
 
     prompt_2_price = f"""
     You are an expert e-commerce price analyst. Your task is to provide a price estimate for the item shown in the image,

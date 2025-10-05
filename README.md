@@ -17,6 +17,23 @@
 - TypeScript
 - Github
 
+## Features
+*h
+
+*h
+
+*h
+
+*h
+
+## Streamlit Presentation
+[www.flipplyflopllyEz-bay.com](https://hans27barron-hackharvardwebpage-home-zps34k.streamlit.app/)
+
+## Video Demo
+htttppspsps
+
+
+
 
 
 ## Get started

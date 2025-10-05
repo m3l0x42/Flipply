@@ -8,6 +8,11 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+MY_SANDBOX_APP_ID = "JuanFern-HackHarv-SBX-788fbab9a-6f33a2ab"
+MY_SANDBOX_DEV_ID = "57016d2d-f4a4-424d-98c5-81f93508e0f3"
+MY_SANDBOX_CERT_ID = "SBX-88fbab9a6687-6f93-4d5e-a5df-db99"
+MY_SANDBOX_TOKEN = "v^1.1#i^1#f^0#r^1#I^3#p^3#t^Ul4xMF8yOjgzNjQ1NkYxMzExNjA4NEZEQUMyQTc5OTQyREMwNzlGXzFfMSNFXjEyODQ="
+
 # --- Pydantic Model for the Response ---
 class EbayItemResponse(BaseModel):
     itemId: str
@@ -89,36 +94,31 @@ def _create_listing(api, image_url, title, descr, price, condition, author, lang
         print(f"Listing created successfully! ItemID: {item_id}")
         return item_id
     else:
-        errors = [e.LongMessage for e in response.reply.Errors]
-        raise Exception(f"Error creating eBay listing: {', '.join(errors)}")
+        raise Exception(f"Error creating eBay listing: {response.reply.Errors.ShortMessage}")
 
 # --- Main function to be called from FastAPI ---
 def create_ebay_listing(title: str, description: str, price: float, condition: str, image_data: bytes):
     """
     Orchestrates the full process of creating an eBay listing.
-    """
+    """    
     try:
         # Initialize the Trading API using credentials from environment variables
         api = Trading(
-            domain='api.sandbox.ebay.com',
-            appid=os.environ.get("EBAY_SANDBOX_APP_ID"),
-            devid=os.environ.get("EBAY_SANDBOX_DEV_ID"),
-            certid=os.environ.get("EBAY_SANDBOX_CERT_ID"),
-            token=os.environ.get("EBAY_SANDBOX_TOKEN"),
-            config_file=None
+            domain='api.sandbox.ebay.com', # CRITICAL: This targets the sandbox
+            appid=MY_SANDBOX_APP_ID,
+            devid=MY_SANDBOX_DEV_ID,
+            certid=MY_SANDBOX_CERT_ID,
+            token=MY_SANDBOX_TOKEN,
+            config_file=None # Explicitly disable config file loading
         )
         
-        # Step 1: Upload the image
         hosted_image_url = _upload_image_to_ebay(api, image_data)
         
-        # Step 2: Create the listing
-        # For simplicity, hardcoding author/language, but you could pass these in too
         item_id = _create_listing(
             api, hosted_image_url, title, description, price, condition, 
             author="Various", language="English"
         )
         
-        # Step 3: Return a structured response
         return EbayItemResponse(
             itemId=item_id,
             listingUrl=f"https://sandbox.ebay.com/itm/{item_id}",
@@ -131,5 +131,4 @@ def create_ebay_listing(title: str, description: str, price: float, condition: s
         raise Exception(f"Could not connect to eBay API: {e.response.reason}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        # Re-raise the exception to be handled by the FastAPI endpoint
         raise e

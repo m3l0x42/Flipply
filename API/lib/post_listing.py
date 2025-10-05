@@ -22,8 +22,14 @@ def upload_image_to_ebay(api, image_path):
             return image_url
         else:
             print("Error uploading image:")
-            for error in response.reply.Errors:
-                print(f"- {error.ShortMessage}: {error.LongMessage}")
+            errors = response.reply.Errors
+            if not isinstance(errors, list):
+                errors = [errors]  # wrap single error in a list
+
+            for error in errors:
+                if error.SeverityCode == 'Error':
+                    print(f"- {error.ShortMessage}: {error.LongMessage}")
+
             return None
 
     except ConnectionError as e:
@@ -90,11 +96,16 @@ def create_listing(api, image_url, title, descr, price, condition):
             print("      LISTING CREATED SUCCESSFULLY!       ")
             print("==========================================")
             print(f"ItemID: {item_id}")
-            print(f"View your sandbox listing at: https://sandbox.ebay.com/itm/{item_id}")
+            print(f"View your sandbox listing at: v{item_id}")
         else:
             print("Error creating listing:")
-            for error in response.reply.Errors:
-                if error.SeverityCode == 'Error':
+            print(response.reply.Errors)
+            errors = response.reply.Errors
+            if not isinstance(errors, list):
+                errors = [errors]  # normalize single error to list
+
+            for error in errors:
+                if getattr(error, "SeverityCode", None) == 'Error':
                     print(f"- {error.ShortMessage}: {error.LongMessage}")
 
     except ConnectionError as e:
