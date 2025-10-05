@@ -26,10 +26,12 @@ app = FastAPI(
     title="HackHarvard API",
 )
 
+
 class EstimatedPrice(BaseModel):
     min: float = Field(...)
     max: float = Field(...)
     suggested: float = Field(...)
+
 
 class ImageAnalysisResponse(BaseModel):
     item: str = Field(...)
@@ -125,23 +127,26 @@ async def analyze_image(image: UploadFile = File(...)):
             initial_analysis_json = json.loads(response.text)
             break
         except Exception as e:
-            print(f"An error occurred during identification (attempt {attempt + 1}): {e}")
+            print(
+                f"An error occurred during identification (attempt {attempt + 1}): {e}")
             if attempt == MAX_RETRIES - 1:
-                 raise HTTPException(
+                raise HTTPException(
                     status_code=503,
                     detail=f"The model failed to identify the item after {MAX_RETRIES} attempts."
                 )
 
     search_query = " ".join(initial_analysis_json.get("searchKeywords", []))
     if not search_query:
-        raise HTTPException(status_code=400, detail="Could not generate search keywords from image.")
+        raise HTTPException(
+            status_code=400, detail="Could not generate search keywords from image.")
 
     try:
         ebay_listings = await search_items(search_query, limit=10)
         print(f"Ebay listigs found: {ebay_listings}")
     except Exception as e:
         print(f"Error searching eBay: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch listings from eBay: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch listings from eBay: {e}")
 
     prompt_2_price = f"""
     You are an expert e-commerce price analyst. Your task is to provide a price estimate for the item shown in the image,
@@ -196,3 +201,55 @@ async def read_root():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+
+class ManualAnalysisRequest(BaseModel):
+    item: str
+    brand: str
+    description: str
+    condition: str
+    searchKeywords: List[str]
+    imageQuality: str
+
+
+@app.post("/reanalyze/", response_model=ImageAnalysisResponse)
+async def reanalyze_item(data: ManualAnalysisRequest):
+    """
+    Recalcula el precio basado en la información textual corregida por el usuario.
+    """
+    prompt_reanalyze = f"""
+    You are an expert e-commerce analyst. Recalculate the estimated price for this item 
+    based on the provided details and market context from eBay.
+
+    Use the same schema as before:
+    {{
+      "estimatedPrice": {{
+        "min": float,
+        "max": float,
+        "suggested": float
+      }}
+    }}
+
+    **Item details:**
+    ```json
+    {json.dumps(data.dict(), indent=2)}
+    ```
+    """
+
+    generation_config = GenerationConfig(response_mime_type="application/json")
+
+    search_query = " ".join(data.searchKeywords)
+    ebay_listings = await search_items(search_query, limit=10)
+
+    response = await model.generate_content_async(
+        [prompt_reanalyze, json.dumps(ebay_listings, indent=2)],
+        stream=False,
+        generation_config=generation_config
+    )
+
+    new_price_json = json.loads(response.text)
+
+    return {
+        **data.dict(),
+        "estimatedPrice": new_price_json.get("estimatedPrice", {"min": 0, "max": 0, "suggested": 0}),
+    }
