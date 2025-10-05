@@ -1,12 +1,16 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, Image, GenerationConfig
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 import uvicorn
 import json
 import os
 from typing import List
 from lib.ebay import search_items
+from lib.ebay_post import set_listing, EbayItemResponse
+
+from lib.ebay_logic import create_ebay_listing, EbayItemResponse
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 MAX_RETRIES = 3
@@ -38,6 +42,43 @@ class ImageAnalysisResponse(BaseModel):
     estimatedPrice: EstimatedPrice
     imageQuality: str = Field(...)
 
+@app.post("/post/", response_model=EbayItemResponse)
+async def post_listing(
+    title: str = Form(...),
+    description: str = Form(...),
+    price: float = Form(...),
+    condition: str = Form(...),
+    image: UploadFile = File(...)
+):
+    """
+    Creates a new eBay listing from the provided details and image.
+    This endpoint expects 'multipart/form-data'.
+    """
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Please upload an image.")
+
+    try:
+        # Read the image data into memory from the uploaded file
+        image_data = await image.read()
+
+        # Because create_ebay_listing uses a blocking I/O library (ebaysdk),
+        # we run it in a threadpool to avoid blocking the server's event loop.
+        listing_response = await run_in_threadpool(
+            create_ebay_listing,
+            title=title,
+            description=description,
+            price=price,
+            condition=condition,
+            image_data=image_data
+        )
+        return listing_response
+        
+    except Exception as e:
+        # Catch errors raised from the ebay_logic module and return a proper HTTP error
+        print(f"Error posting to eBay: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
+
 
 @app.post("/analyze-image/", response_model=ImageAnalysisResponse)
 async def analyze_image(image: UploadFile = File(...)):
@@ -59,19 +100,19 @@ async def analyze_image(image: UploadFile = File(...)):
 
     prompt_1_identify = """
     You are an expert e-commerce analyst. Your task is to identify the item in the image and provide structured data about it.
-    The primary goal is to extract accurate keywords for a second-pass market analysis.
-    You MUST respond with ONLY a valid JSON object. Do not include any other text, explanations, or markdown formatting like ```json.
+    The primary goal is to extract hyper-specific keywords for a market analysis. Include model numbers, series, or any unique identifiers visible.
+    You MUST respond with ONLY a valid JSON object. Do not include any other text, explanations, or markdown formatting.
 
     Use the following JSON schema:
     {
-      "item": "The most likely name of the item.",
-      "brand": "The brand of the item, or 'Unknown' if not identifiable.",
-      "description": "A concise, one-sentence description of the item.",
-      "imageQuality": "An classification of the image quality (Excellent, Good, Fair, Poor).",
-      "searchKeywords": [
-        "A list of 3-5 precise string keywords for finding this item on a marketplace like eBay."
-      ],
-      "condition": "Item condition based on visual inspection (e.g., 'New', 'Used - Like New', 'Used - Good', 'For parts')."
+    "item": "The most likely name of the item, including series or model if possible.",
+    "brand": "The brand of the item, or 'Unknown' if not identifiable.",
+    "description": "A concise, one-sentence description of the item.",
+    "imageQuality": "A classification of the image quality (Excellent, Good, Fair, Poor).",
+    "searchKeywords": [
+        "A list of 3-5 precise string keywords for finding this EXACT item on a marketplace."
+    ],
+    "condition": "Item condition based on visual inspection (e.g., 'New', 'Used - Like New', 'Used - Good', 'For parts')."
     }
     """
 
@@ -129,53 +170,35 @@ async def analyze_image(image: UploadFile = File(...)):
     **Required Output JSON Schema:**
     {{
       "estimatedPrice": {{
-        "min": Minimum price,
-        "max": Maximum item price,
-        "suggested": Suggested item price,
+        "min": 0.0,
+        "max": 0.0,
+        "suggested": 0.0
       }}
     }}
     """
 
-    print(prompt_2_price)
-
     price_analysis_json = None
     for attempt in range(MAX_RETRIES):
         try:
-            # We include the image again so the model can visually compare its condition
-            # against the descriptions and prices in the eBay listings.
             response = await model.generate_content_async(
                 [image_part, prompt_2_price],
                 stream=False,
                 generation_config=generation_config
             )
             price_analysis_json = json.loads(response.text)
-            break  # Success, exit loop
+            break
         except Exception as e:
-            print(
-                f"An error occurred during pricing (attempt {attempt + 1}): {e}")
-            if attempt == MAX_RETRIES - 1:
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"The model failed to price the item after {MAX_RETRIES} attempts."
-                )
+            print(f"An error occurred on attempt {attempt + 1}: {e}")
 
-    # --- MODIFICATION 5: Combine results and return ---
-    # Merge the results from the identification step and the pricing step.
     final_response = initial_analysis_json
-    final_response["estimatedPrice"] = price_analysis_json.get(
-        "estimatedPrice", {"min": 0.0, "max": 0.0, "suggested": 0.0}
-    )
 
     return final_response
-
 
 @app.get("/")
 async def read_root():
     return {"message": "Hello world!"}
 
-
 if __name__ == "__main__":
-    # It's good practice to ensure the port is an integer
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
 

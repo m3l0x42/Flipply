@@ -9,9 +9,9 @@ NS = {"eb": "urn:ebay:apis:eBLBaseComponents"}
 
 BASE_HEADERS = {
     "X-EBAY-API-COMPATIBILITY-LEVEL": "1193",
-    "X-EBAY-API-DEV-NAME": os.environ["EBAY_DEV_ID"],
-    "X-EBAY-API-APP-NAME": os.environ["EBAY_APP_ID"],
-    "X-EBAY-API-CERT-NAME": os.environ["EBAY_CERT_ID"],
+    "X-EBAY-API-DEV-NAME": "57016d2d-f4a4-424d-98c5-81f93508e0f3",
+    "X-EBAY-API-APP-NAME": "JuanFern-HackHarv-SBX-788fbab9a-6f33a2ab",
+    "X-EBAY-API-CERT-NAME": "SBX-88fbab9a6687-6f93-4d5e-a5df-db99",
     "X-EBAY-API-SITEID": "0",
     "Content-Type": "text/xml",
 }
