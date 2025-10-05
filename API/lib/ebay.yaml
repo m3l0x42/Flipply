@@ -1,0 +1,22 @@
+#
+# SANDBOX KEYS
+#
+sandbox:
+  appid: "JuanFern-HackHarv-SBX-788fbab9a-6f33a2ab"
+  devid: "57016d2d-f4a4-424d-98c5-81f93508e0f3"
+  certid: "SBX-88fbab9a6687-6f93-4d5e-a5df-db99"
+  token: "v^1.1#i^1#f^0#r^1#I^3#p^3#t^Ul4xMF8yOjgzNjQ1NkYxMzExNjA4NEZEQUMyQTc5OTQyREMwNzlGXzFfMSNFXjEyODQ="
+  
+  # The compatibility level belongs INSIDE the sandbox block
+  # and must be spelled "compatability"
+  compatability: 967
+
+#
+# PRODUCTION KEYS (if you use them later)
+#
+# production:
+#   appid: YOUR_PRODUCTION_APP_ID
+#   devid: YOUR_PRODUCTION_DEV_ID
+#   certid: YOUR_PRODUCTION_CERT_ID
+#   token: "YOUR_PRODUCTION_TOKEN"
+#   compatability: 967

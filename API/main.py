@@ -1,12 +1,16 @@
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, Image, GenerationConfig
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 import uvicorn
 import json
 import os
 from typing import List
 from lib.ebay import search_items
+from lib.ebay_post import set_listing, EbayItemResponse
+
+from lib.ebay_logic import create_ebay_listing, EbayItemResponse
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 MAX_RETRIES = 3
@@ -35,6 +39,44 @@ class ImageAnalysisResponse(BaseModel):
     condition: str = Field(...)
     estimatedPrice: EstimatedPrice
     imageQuality: str = Field(...)
+
+@app.post("/post/", response_model=EbayItemResponse)
+async def post_listing(
+    title: str = Form(...),
+    description: str = Form(...),
+    price: float = Form(...),
+    condition: str = Form(...),
+    image: UploadFile = File(...)
+):
+    """
+    Creates a new eBay listing from the provided details and image.
+    This endpoint expects 'multipart/form-data'.
+    """
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Please upload an image.")
+
+    try:
+        # Read the image data into memory from the uploaded file
+        image_data = await image.read()
+
+        # Because create_ebay_listing uses a blocking I/O library (ebaysdk),
+        # we run it in a threadpool to avoid blocking the server's event loop.
+        listing_response = await run_in_threadpool(
+            create_ebay_listing,
+            title=title,
+            description=description,
+            price=price,
+            condition=condition,
+            image_data=image_data
+        )
+        return listing_response
+        
+    except Exception as e:
+        # Catch errors raised from the ebay_logic module and return a proper HTTP error
+        print(f"Error posting to eBay: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
+
 
 @app.post("/analyze-image/", response_model=ImageAnalysisResponse)
 async def analyze_image(image: UploadFile = File(...)):
@@ -141,12 +183,7 @@ async def analyze_image(image: UploadFile = File(...)):
             price_analysis_json = json.loads(response.text)
             break
         except Exception as e:
-            print(f"An error occurred during pricing (attempt {attempt + 1}): {e}")
-            if attempt == MAX_RETRIES - 1:
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"The model failed to price the item after {MAX_RETRIES} attempts."
-                )
+            print(f"An error occurred on attempt {attempt + 1}: {e}")
 
     final_response = initial_analysis_json
 
