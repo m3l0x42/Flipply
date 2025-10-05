@@ -42,6 +42,7 @@ class ImageAnalysisResponse(BaseModel):
     estimatedPrice: EstimatedPrice
     imageQuality: str = Field(...)
 
+
 @app.post("/post/", response_model=EbayItemResponse)
 async def post_listing(
     title: str = Form(...),
@@ -73,11 +74,12 @@ async def post_listing(
             image_data=image_data
         )
         return listing_response
-        
+
     except Exception as e:
         # Catch errors raised from the ebay_logic module and return a proper HTTP error
         print(f"Error posting to eBay: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create eBay listing: {str(e)}")
 
 
 @app.post("/analyze-image/", response_model=ImageAnalysisResponse)
@@ -194,6 +196,7 @@ async def analyze_image(image: UploadFile = File(...)):
 
     return final_response
 
+
 @app.get("/")
 async def read_root():
     return {"message": "Hello world!"}
@@ -201,55 +204,3 @@ async def read_root():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
-class ManualAnalysisRequest(BaseModel):
-    item: str
-    brand: str
-    description: str
-    condition: str
-    searchKeywords: List[str]
-    imageQuality: str
-
-
-@app.post("/reanalyze/", response_model=ImageAnalysisResponse)
-async def reanalyze_item(data: ManualAnalysisRequest):
-    """
-    Recalcula el precio basado en la información textual corregida por el usuario.
-    """
-    prompt_reanalyze = f"""
-    You are an expert e-commerce analyst. Recalculate the estimated price for this item 
-    based on the provided details and market context from eBay.
-
-    Use the same schema as before:
-    {{
-      "estimatedPrice": {{
-        "min": float,
-        "max": float,
-        "suggested": float
-      }}
-    }}
-
-    **Item details:**
-    ```json
-    {json.dumps(data.dict(), indent=2)}
-    ```
-    """
-
-    generation_config = GenerationConfig(response_mime_type="application/json")
-
-    search_query = " ".join(data.searchKeywords)
-    ebay_listings = await search_items(search_query, limit=10)
-
-    response = await model.generate_content_async(
-        [prompt_reanalyze, json.dumps(ebay_listings, indent=2)],
-        stream=False,
-        generation_config=generation_config
-    )
-
-    new_price_json = json.loads(response.text)
-
-    return {
-        **data.dict(),
-        "estimatedPrice": new_price_json.get("estimatedPrice", {"min": 0, "max": 0, "suggested": 0}),
-    }

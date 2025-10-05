@@ -22,7 +22,6 @@ export default function ResultsScreen() {
 
   const result: AnalysisResult = JSON.parse(params.analysisData);
 
-  // ✅ Estados locales para los textos editables
   const [itemName, setItemName] = useState(result.item);
   const [brand, setBrand] = useState(result.brand);
   const [description, setDescription] = useState(result.description);
@@ -85,80 +84,6 @@ export default function ResultsScreen() {
             placeholderTextColor="#888"
             multiline
           />
-
-          {/*<Text style={styles.infoText}>{result.condition}</Text>*/}
-
-          {/* <Pressable
-            style={{
-              backgroundColor: '#007AFF',
-              paddingVertical: 12,
-              paddingHorizontal: 30,
-              borderRadius: 8,
-              alignItems: 'center',
-              marginTop: 10,
-            }}
-            onPress={() => Alert.alert('Updated!', 'Item details have been updated successfully')}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-              Update information
-            </Text>
-          </Pressable> */}
-
-          <Pressable
-            style={{
-              backgroundColor: loading ? '#999' : '#007AFF',
-              paddingVertical: 12,
-              paddingHorizontal: 30,
-              borderRadius: 8,
-              alignItems: 'center',
-              marginTop: 10,
-            }}
-            disabled={loading}
-            onPress={async () => {
-              try {
-                setLoading(true);
-
-                const response = await fetch('http://127.0.0.1:8000/reanalyze/', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    item: itemName,
-                    brand: brand,
-                    description: description,
-                    condition: condition,
-                    searchKeywords: result.searchKeywords,
-                    imageQuality: result.imageQuality,
-                  }),
-                });
-
-                if (!response.ok) {
-                  throw new Error(`Error ${response.status}: ${await response.text()}`);
-                }
-
-                const updatedData = await response.json();
-
-                setSelectedPrice(updatedData.estimatedPrice.suggested);
-                result.estimatedPrice = updatedData.estimatedPrice;
-
-                Alert.alert(
-                  'Reanalyzed!',
-                  `New suggested price: $${updatedData.estimatedPrice.suggested.toFixed(2)}`
-                );
-              } catch (error) {
-                console.error('Reanalyze error:', error);
-                Alert.alert('Error', 'Failed to reanalyze item. Please try again.');
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-              {loading ? 'Reanalyzing...' : 'Reanalyze'}
-            </Text>
-          </Pressable>
-
 
           <Text style={styles.subHeader}>Set Your Price</Text>
           <Text style={styles.priceDisplay}>${selectedPrice.toFixed(2)}</Text>
