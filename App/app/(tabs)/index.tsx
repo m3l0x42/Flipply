@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 
-const UPLOAD_URL = 'http://10.253.28.1:8000/analyze-image/';
+const UPLOAD_URL = 'http://10.253.20.128:8000/analyze-image/';
 
 export default function HomeScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);

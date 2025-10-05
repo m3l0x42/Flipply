@@ -7,30 +7,25 @@
 <img src="assets/hh1.jpg" alt="App1" width="150"/> <img src="assets/hh2.jpg" alt="App2" width="150"/> <img src="assets/hh3.jpg" alt="App3" width="150"/><img src="assets/hh4.jpg" alt="App4" width="150"/><img src="assets/hh5.jpg" alt="App5" width="150"/>
 
 
-## Tech & Langs
+## Tech Stack
 - Gemini API
+- React Native
 - eBay API
-- React
 - Streamlit
-- Python
-- JavaScript
-- TypeScript
+- FastAPI & Python
 - Github
 
 ## Features
-*h
+* EBay integration: Instantly list any items on Ebay within a minute without having to leave our app
 
-*h
+* Identify & explore items: Identify items and recommend a price based on similar items listed for sale
 
-*h
-
-*h
+* Sharing, photo assistamce for more accurate results and more!
 
 ## Streamlit Presentation
 [www.flipplyflopllyEz-bay.com](https://hans27barron-hackharvardwebpage-home-zps34k.streamlit.app/)
 
 ## Video Demo
-htttppspsps
 
 
 

@@ -129,7 +129,7 @@ export default function ResultsScreen() {
                 type: "image/jpeg",
               } as any);
           
-              const response = await fetch("http://10.253.28.1:8000/post/", {
+              const response = await fetch("http://10.253.20.128:8000/post/", {
                 method: "POST",
                 headers: {
                   "Content-Type": "multipart/form-data",
